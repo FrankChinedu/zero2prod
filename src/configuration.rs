@@ -28,9 +28,10 @@ impl DatabaseSettings {
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     let mut builder = config::Config::builder();
     builder = builder.add_source(File::new("configuration.yaml", FileFormat::Yaml));
+    builder.build()?.try_deserialize()
 
-    match builder.build() {
-        Ok(config) => config.try_deserialize(),
-        Err(e) => Err(e),
-    }
+    // match builder.build() {
+    //     Ok(config) => config.try_deserialize(),
+    //     Err(e) => Err(e),
+    // }
 }
