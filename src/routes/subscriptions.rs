@@ -10,13 +10,13 @@ pub struct FormData {
 // Let's start simple: we always return a 200 OK
 pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
     let request_id = Uuid::new_v4();
-    log::info!(
+    tracing::info!(
         "request_id {} - Adding '{}' '{}' as a new subscriber.",
         request_id,
         form.email,
         form.name
     );
-    log::info!(
+    tracing::info!(
         "request_id {} - Saving new subscriber details in the database",
         request_id
     );
@@ -33,14 +33,14 @@ pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Ht
     .await
     {
         Ok(_) => {
-            log::info!(
+            tracing::info!(
                 "request_id {} - New subscriber details have been saved",
                 request_id
             );
             HttpResponse::Ok().finish()
         }
         Err(e) => {
-            log::error!("Failed to execute query: {:?}", e);
+            tracing::error!("Failed to execute query: {:?}", e);
             HttpResponse::InternalServerError().finish()
         }
     }
