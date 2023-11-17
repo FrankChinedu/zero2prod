@@ -1,9 +1,11 @@
-use std::net::TcpListener;
-
+use once_cell::sync::Lazy;
 use reqwest::Client;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
+use std::net::TcpListener;
 use uuid::Uuid;
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
+use zero2prod::startup::run;
+use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
 #[tokio::test]
 async fn health_check_works() {
@@ -21,11 +23,6 @@ async fn health_check_works() {
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     let (test_app, client) = get_address_and_client().await;
-    let configuration = get_configuration().expect("Failed to read configuration");
-    let connection_string = configuration.database.connection_string();
-    let mut connection = PgConnection::connect(&connection_string)
-        .await
-        .expect("Failed to connect to Postgres.");
 
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
     let response = client
@@ -38,7 +35,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
     assert_eq!(200, response.status().as_u16());
 
     let saved = sqlx::query!("SELECT email, name FROM subscriptions",)
-        .fetch_one(&mut connection)
+        .fetch_one(&test_app.db_pool)
         .await
         .expect("Failed to fetch saved subscription.");
     assert_eq!(saved.email, "ursula_le_guin@gmail.com");
@@ -79,19 +76,25 @@ async fn get_address_and_client() -> (TestApp, Client) {
     (test_app, client)
 }
 
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let subscriber = get_subscriber("test".into(), "debug".into());
+    init_subscriber(subscriber);
+});
+
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
 }
 
 async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind random port");
     let port = listener.local_addr().unwrap().port();
     let mut configuration = get_configuration().expect("Failed to read configuration.");
     configuration.database.database_name = Uuid::new_v4().to_string();
     let connection_pool = configure_database(&configuration.database).await;
-    let server =
-        zero2prod::startup::run(listener, connection_pool.clone()).expect("failed to bind address");
+    let server = run(listener, connection_pool.clone()).expect("failed to bind address");
 
     tokio::spawn(server);
 
