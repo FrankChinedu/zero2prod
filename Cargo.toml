@@ -37,10 +37,9 @@ version = "0.7.2"
 default-features = false
 features = [
   "runtime-tokio",
-  # "runtime-actix-rustls",
   "macros",
   "postgres",
   "uuid",
   "chrono",
-  "migrate"
+  "migrate",
 ]
