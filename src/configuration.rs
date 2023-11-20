@@ -40,7 +40,6 @@ impl DatabaseSettings {
             // Try an encrypted connection, fallback to unencrypted if it fails PgSslMode::Prefer
             PgSslMode::Prefer
         };
-        println!("ssl_mode {:?}", ssl_mode);
         PgConnectOptions::new()
             .host(&self.host)
             .username(&self.username)
