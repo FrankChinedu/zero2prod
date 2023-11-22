@@ -1,12 +1,9 @@
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
-use std::net::TcpListener;
 use uuid::Uuid;
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
-use zero2prod::email_client::EmailClient;
-use zero2prod::startup::run;
-use zero2prod::startup::{build, get_connection_pool};
+use zero2prod::startup::{get_connection_pool, Application};
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
 static TRACING: Lazy<()> = Lazy::new(|| {
@@ -33,13 +30,14 @@ async fn spawn_app() -> TestApp {
         c
     };
     configure_database(&configuration.database).await;
-    let server = build(configuration.clone())
+    let application = Application::build(configuration.clone())
         .await
-        .expect("Failed to build application.");
-    let _ = tokio::spawn(server);
+        .expect("Failed to build application");
+    let address = format!("http://127.0.0.1:{}", application.port());
+    tokio::spawn(application.run_until_stopped());
 
     TestApp {
-        address: todo!("http://127.0.0.1"),
+        address,
         db_pool: get_connection_pool(&configuration.database),
     }
 }
