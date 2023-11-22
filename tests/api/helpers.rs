@@ -19,7 +19,7 @@ static TRACING: Lazy<()> = Lazy::new(|| {
     };
 });
 
-async fn spawn_app() -> TestApp {
+pub async fn spawn_app() -> TestApp {
     Lazy::force(&TRACING);
 
     let configuration = {
@@ -42,11 +42,6 @@ async fn spawn_app() -> TestApp {
     }
 }
 
-pub struct TestApp {
-    pub address: String,
-    pub db_pool: PgPool,
-}
-
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
     let mut connection = PgConnection::connect_with(&config.without_db())
         .await
@@ -67,8 +62,19 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
     connection_pool
 }
 
-pub async fn get_address_and_client() -> (TestApp, Client) {
-    let test_app = spawn_app().await;
-    let client = reqwest::Client::new();
-    (test_app, client)
+pub struct TestApp {
+    pub address: String,
+    pub db_pool: PgPool,
+}
+
+impl TestApp {
+    pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
+        Client::new()
+            .post(&format!("{}/subscriptions", &self.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
 }
