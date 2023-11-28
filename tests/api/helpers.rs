@@ -1,6 +1,5 @@
 use once_cell::sync::Lazy;
 use reqwest::Client;
-use secrecy::{ExposeSecret, Secret};
 use sha3::Digest;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use uuid::Uuid;
@@ -143,7 +142,7 @@ impl TestUser {
         }
     }
 
-    async fn store(&self, pool: &PgPool) {
+    async fn _store(&self, pool: &PgPool) {
         let password_hash = sha3::Sha3_256::digest(self.password.as_bytes());
         let password_hash = format!("{:x}", password_hash);
         sqlx::query!(
