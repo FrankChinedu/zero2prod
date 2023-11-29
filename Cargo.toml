@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web="4"
+actix-web = "4"
 config = "0.13"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-serde = { version = "1", features = ["derive"]}
-chrono="0.4"
-uuid={ version = "1.5.0", features = ["v4", "fast-rng", "macro-diagnostics"]}
+serde = { version = "1", features = ["derive"] }
+chrono = "0.4"
+uuid = { version = "1.5.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
 env_logger = "0.10"
 log = "0.4"
 tracing = { version = "0.1", features = ["log"] }
@@ -23,12 +23,14 @@ tracing-actix-web = "0.7"
 serde-aux = "4"
 unicode-segmentation = "1.10.1"
 validator = "0.16"
-reqwest = { version ="0.11.22", default-features = false, features = ["json", "rustls-tls"] }
-rand = { version = "0.8", features=["std_rng"] }
+reqwest = { version = "0.11.22", default-features = false, features = [
+  "json",
+  "rustls-tls",
+] }
+rand = { version = "0.8", features = ["std_rng"] }
 thiserror = "1"
 anyhow = "1"
 base64 = "0.13"
-sha3 = "0.10"
 argon2 = { version = "0.4", features = ["std"] }
 
 [lib]
@@ -53,11 +55,4 @@ linkify = "0.10"
 [dependencies.sqlx]
 version = "0.7"
 default-features = false
-features = [
-  "runtime-tokio",
-  "macros",
-  "postgres",
-  "uuid",
-  "chrono",
-  "migrate",
-]
+features = ["runtime-tokio", "macros", "postgres", "uuid", "chrono", "migrate"]
