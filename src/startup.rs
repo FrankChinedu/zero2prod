@@ -23,7 +23,7 @@ pub fn run(
     db_pool: PgPool,
     email_client: EmailClient,
     base_url: String,
-    hmac_secret: Secret<String>,
+    hmac_secret: HmacSecret,
 ) -> Result<Server, std::io::Error> {
     let db_pool = web::Data::new(db_pool);
     let email_client = web::Data::new(email_client);
@@ -83,7 +83,7 @@ impl Application {
             connection_pool,
             email_client,
             configuration.application.base_url,
-            configuration.application.hmac_secret,
+            HmacSecret(configuration.application.hmac_secret),
         )?;
 
         Ok(Self { port, server })
@@ -97,3 +97,6 @@ impl Application {
         self.server.await
     }
 }
+
+#[derive(Clone)]
+pub struct HmacSecret(pub Secret<String>);
