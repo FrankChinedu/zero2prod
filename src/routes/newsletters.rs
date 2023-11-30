@@ -1,4 +1,4 @@
-use crate::{domain::SubscriberEmail, email_client::EmailClient, routes::error_chain_fmt};
+use crate::{domain::SubscriberEmail, email_client::EmailClient, routes::error_chain_fmt, telemetry::spawn_blocking_with_tracing};
 use actix_web::http::{
     header::{HeaderMap, HeaderValue},
     {header, StatusCode},
@@ -110,10 +110,10 @@ async fn get_confirmed_subscribers(
 ) -> Result<Vec<Result<ConfirmedSubscriber, anyhow::Error>>, anyhow::Error> {
     let rows = sqlx::query!(
         r#"
-  SELECT email
-          FROM subscriptions
-          WHERE status = 'confirmed'
-          "#,
+        SELECT email
+        FROM subscriptions
+        WHERE status = 'confirmed'
+        "#,
     )
     .fetch_all(pool)
     .await?;
@@ -177,14 +177,17 @@ async fn validate_credentials(
     .map_err(PublishError::UnexpectedError)?
     .ok_or_else(|| PublishError::AuthError(anyhow::anyhow!("Unknown username.")))?;
 
-    tokio::task::spawn_blocking(move || { verify_password_hash(
-        expected_password_hash,
-        credentials.password
-        )
+    tokio::task::spawn_blocking(move || {
+        spawn_blocking_with_tracing(move || {
+            verify_password_hash(
+                expected_password_hash, 
+                credentials.password
+            )
+        });
     })
     .await
     .context("Failed to spawn blocking task.")
-    .map_err(PublishError::UnexpectedError)??;
+    .map_err(PublishError::UnexpectedError)?;
 
     Ok(user_id)
 }
