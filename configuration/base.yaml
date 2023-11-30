@@ -1,6 +1,7 @@
 # configuration.yaml
 application:
   port: 8000
+  hmac_secret: "super-long-and-secret-random-key-needed-to-verify-message-integrity"
 email_client:
   base_url: "localhost"
   sender_email: "test@gmail.com"
